@@ -115,10 +115,22 @@ def scan() :
     if repscan == 8:
         runsniffing()
 
+def savesess():
+    dir()
+    save_session("session.scapy")
+    menu()
+
+def loadsess():
+    load_session("session.scapy")
+    dir()
+    menu()
+
 def menu():
     print('Demarrage du programme')
-    print('1 : demarage du scan')
-    print('99: export resultat sniff')
+    print('1 :   demarage du scan')
+    print('99:   is not yet implemented')
+    print('109:  save sessions')
+    print('110:  load sessions')
     print('111 : sortie du programme')
     rep = input('Selectionner votre choix')
     rep2int = int(rep)
@@ -127,7 +139,11 @@ def menu():
         for elem in discovedred_host:
             print(elem)
     if rep2int == 99:
-        sniffresult.pdfdump('sniff.pdf')
+        menu()
+    if rep2int == 109:
+        savesess()
+    if rep2int == 110:
+        loadsess()
     if rep2int == 111:
         sys.exit(0)
 
