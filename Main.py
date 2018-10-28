@@ -2,8 +2,68 @@
 
 from kamene.all import *
 import sys
+import random
+import netaddr
 
 
+def pingsweep():
+    # definit la plage ip
+    network = input('Entrer une plage d adresse type x.x.x.x /yy')
+
+    # construit une liste d adresse du reseau, initialise le counter hote
+    addresses = netaddr.IPNetwork(network)
+    liveCounter = 0
+
+    # envoi une requete ICMP et attend une réponse
+    for host in addresses:
+        if (host == addresses.network or host == addresses.broadcast):
+            # passe le réseau et le broadcast
+            continue
+
+        resp = sr1(IP(dst=str(host)) / ICMP(), timeout=0.5, verbose=0)
+
+        if resp is None:
+            print(host, 'ne répond pas')
+        elif (
+                int(resp.getlayer(ICMP).type) == 3 and
+                int(resp.getlayer(ICMP).code) in [1, 2, 3, 9, 10, 13]
+        ):
+            print(host, 'bloque ICMP')
+        else:
+            print(host, ' est en ligne ')
+            liveCounter += 1
+
+    print('{}/{} hotes sont en ligne.'.format(liveCounter, addresses.size))
+    menu()
+def tcpPortRangeScanner():
+    portrange = []
+    print('Test les ports ouverts sur une hote unique')
+    print('Randomize des port source pour passer les parefeu basique')
+    print('Ne fonctionne pas sur les parefeu actuels')
+    host=  input('Entrer l ip de l hote cible')
+    getinput = input('Entrer un port, entrer stop pour finir l ajout de port')
+    while (getinput != "stop"):
+        portrange.append(int(getinput))
+        getinput = input('Entrez un port, entrez stop pour terminer l ajout de port')
+    print('Envoi de SYN avec un port source aleatoire pour passer l anti flood parefeu')
+    for dstPort in portrange:
+        srcPort = random.randint(1025, 65534)
+        resp = sr1(IP(dst=host) / TCP(sport=srcPort, dport=dstPort, flags="S"), timeout=0.5)
+        if resp is None:
+            print('{}:{} est filtré (silently dropped).'.format(host, str(dstPort)))
+        elif (resp.haslayer(TCP)):
+            if (resp.getlayer(TCP).flags == 0x12):
+                # Envoi d'un flag reset pour fermer la connection
+                send_rst = sr(IP(dst=host) / TCP(sport=srcPort, dport=dstPort, flags='R'), timeout=0.5)
+                print('{}:{} est ouvert.'.format(host, str(dstPort)))
+            elif (resp.getlayer(TCP).flags == 0x14):
+                print('{}:{} est fermé.'.format(host, str(dstPort)))
+
+        elif (resp.haslayer(ICMP)):
+            if (int(resp.getlayer(ICMP).type) == 3 and int(resp.getlayer(ICMP).code) in [1, 2, 3, 9, 10, 13]):
+                print('{}:{} est filtré (silently dropped).'.format(host, str(dstPort)))
+
+    menu()
 
 def runsniffing():
     print('Lancement du sniffing')
@@ -46,7 +106,7 @@ def BFT():
     res.nsummary()
     res.graph()
     res.graph(type="ps", target="lp")
-    res.graph(target="graph.svg")
+    res.graph(target="> graph.svg")
     menu()
 
 def tracrt():
@@ -116,18 +176,22 @@ def sendSynOnPort():
                 print(recu.src + ' a le port ' + str(recu.sport) + ' ouvert ')
     menu()
 def scan() :
-    print('1) Attaque ICMP Sweep -- a implémenter')
+    print('1) Attaque ICMP Sweep ')
     print('2) ICMP redirect -- a implémenter')
     print('3) ICMP Close TCP --a implementer')
     print('4) Ping adresse distante')
-    print('5) Découverte réseau')
+    print('5) Découverte réseau sans ICMP sweep')
     print('----------------------------------------')
     print('6) Envoi TCP SYN-ACK sur une liste de port')
     print('7) Traceroute')
     print('8) sniffinf')
     print('9) Big Fuckinig Traceroute')
+    print('------------------------------------------')
+    print('10) Scanner port ouvert TCP hote unique en port source aleatoire')
     repscan = input('Selectionner vvotre choix')
     repscan=int(repscan)
+    if repscan == 1:
+        pingsweep()
     if repscan == 4 :
         monoping()
     if repscan == 5:
@@ -140,6 +204,8 @@ def scan() :
         runsniffing()
     if repscan == 9:
         BFT()
+    if repscan == 10:
+        tcpPortRangeScanner()
 
 def savesess():
     dir()
