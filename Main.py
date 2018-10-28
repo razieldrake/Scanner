@@ -25,6 +25,29 @@ def runsniffing():
         menu()
 
 
+def BFT():
+    host=[]
+    port = []
+    print('Un traceroute qui n attend pas les reponse')
+    print('precedentes pour lancer les autre trace')
+    print('Veuillez noter la liste des nom de dommaine ')
+    print ('entrer stop pour arreter d ajouter des hote')
+    getinput = input('entrer les hotes a tracer')
+    while (getinput != "stop"):
+        host.append(getinput)
+        getinput = input('Entrer les hotes a tracer et entrer stop pour arreter')
+    print ('Veuillez entrer les port sur lesquel faire le BFT')
+    print('Entrer stop pour arreter d enregistrer des ports')
+    getinput = input('Entrer les ports sur lesquels tracer')
+    while(getinput != "stop"):
+        port.append(int(getinput))
+        getinput = input('Entrer les ports  a tracer et entrer stop pour arreter')
+    res,unres = traceroute(host,dport=port,maxttl=50,retry=-2)
+    res.nsummary()
+    res.graph()
+    res.graph(type="ps", target="lp")
+    res.graph(target="graph.svg")
+    menu()
 
 def tracrt():
     print('Mode traceroute')
@@ -102,6 +125,7 @@ def scan() :
     print('6) Envoi TCP SYN-ACK sur une liste de port')
     print('7) Traceroute')
     print('8) sniffinf')
+    print('9) Big Fuckinig Traceroute')
     repscan = input('Selectionner vvotre choix')
     repscan=int(repscan)
     if repscan == 4 :
@@ -114,6 +138,8 @@ def scan() :
         tracrt()
     if repscan == 8:
         runsniffing()
+    if repscan == 9:
+        BFT()
 
 def savesess():
     dir()
